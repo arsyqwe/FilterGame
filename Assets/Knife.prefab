@@ -104,8 +104,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc026fbd54edc174fb358bbd3689e850, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Knife
-  flySpeed: 15000
-  isFlying: 0
-  isOnCircle: 0
-  targetCircle: {fileID: 0}
-  collisionDistance: 2
+  flySpeed: 15

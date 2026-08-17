@@ -18,7 +18,6 @@ namespace Mediapipe.Unity.Sample.FaceLandmarkDetection
         private Experimental.TextureFramePool _textureFramePool;
         public readonly FaceLandmarkDetectionConfig config = new FaceLandmarkDetectionConfig();
 
-     
         private bool _isDetecting = false;
 
         private long _syntheticTimestamp = 0;
@@ -40,6 +39,7 @@ namespace Mediapipe.Unity.Sample.FaceLandmarkDetection
             yield return AssetLoader.PrepareAssetAsync(config.ModelPath);
 
             var options = config.GetFaceLandmarkerOptions(config.RunningMode == Tasks.Vision.Core.RunningMode.LIVE_STREAM ? OnFaceLandmarkDetectionOutput : null);
+
             taskApi = FaceLandmarker.CreateFromOptions(options, GpuManager.GpuResources);
             var imageSource = ImageSourceProvider.ImageSource;
 
@@ -61,7 +61,7 @@ namespace Mediapipe.Unity.Sample.FaceLandmarkDetection
             var flipVertically = transformationOptions.flipVertically;
             var imageProcessingOptions = new Tasks.Vision.Core.ImageProcessingOptions(rotationDegrees: (int)transformationOptions.rotationAngle);
 
-            AsyncGPUReadbackRequest req = default;
+            AsyncGPUReadbackRequest req = default; 
             var waitUntilReqDone = new WaitUntil(() => req.done);
             var waitForEndOfFrame = new WaitForEndOfFrame();
             var result = FaceLandmarkerResult.Alloc(options.numFaces);
@@ -105,7 +105,6 @@ namespace Mediapipe.Unity.Sample.FaceLandmarkDetection
                         break;
                 }
 
-               
                 if (_isDetecting)
                 {
                     image?.Dispose();
@@ -120,6 +119,7 @@ namespace Mediapipe.Unity.Sample.FaceLandmarkDetection
                         if (taskApi.TryDetect(image, imageProcessingOptions, ref result))
                         {
                             _faceLandmarkerResultAnnotationController.DrawNow(result);
+                            ProcessDetectionResult(result);
                         }
                         image?.Dispose();
                         _isDetecting = false;
@@ -132,7 +132,7 @@ namespace Mediapipe.Unity.Sample.FaceLandmarkDetection
                             ProcessDetectionResult(result);
                         }
                         image?.Dispose();
-                        _isDetecting = false; 
+                        _isDetecting = false;
                         break;
 
                     case Tasks.Vision.Core.RunningMode.LIVE_STREAM:
@@ -142,26 +142,20 @@ namespace Mediapipe.Unity.Sample.FaceLandmarkDetection
             }
         }
 
-       
         private void OnFaceLandmarkDetectionOutput(FaceLandmarkerResult result, Image image, long timestamp)
         {
             _faceLandmarkerResultAnnotationController.DrawLater(result);
             ProcessDetectionResult(result);
 
-            image?.Dispose();  
+            image?.Dispose();
             _isDetecting = false;
         }
 
-        
         private void ProcessDetectionResult(FaceLandmarkerResult result)
         {
-            if (result.faceLandmarks == null || result.faceLandmarks.Count == 0) return;
-
             
-            if (FaceTrackingCube.Instance != null)
-            {
-                FaceTrackingCube.Instance.ProcessFaceData(result.faceLandmarks[0]);
-            }
+            MovementByHead.Instance.ProcessLandmarks(result);
+            
         }
     }
 }

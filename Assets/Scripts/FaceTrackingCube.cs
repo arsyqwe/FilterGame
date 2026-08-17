@@ -16,19 +16,18 @@ public class FaceTrackingCube : MonoBehaviour
   
     public float blinkThreshold = 0.015f;
 
-    private float _targetX;
-    private float _currentVelocityX;
-    private float _baseY;
-    private float _currentY;
+    public float _targetX;
+    public float _currentVelocityX;
+    public float _baseY;
+    public float _currentY;
+    public Renderer _cubeRenderer;
 
-    private Renderer _cubeRenderer;
+    public volatile bool _hasNewData = false;
+    public volatile float _latestFaceY = 0f;
+    public volatile bool _latestEyeClosed = false;
+    public bool _wasEyeClosedLastFrame = false;
 
-    private volatile bool _hasNewData = false;
-    private volatile float _latestFaceY = 0f;
-    private volatile bool _latestEyeClosed = false;
-    private bool _wasEyeClosedLastFrame = false;
-
-    private GUIStyle _guiStyle;
+    public GUIStyle _guiStyle;
 
     void Awake()
     {
@@ -103,7 +102,8 @@ public class FaceTrackingCube : MonoBehaviour
 
         float leftEyeDist = Vector3.Distance(leftUpper, leftLower);
         float rightEyeDist = Vector3.Distance(rightUpper, rightLower);
-
+        Debug.Log(leftEyeDist);
+        Debug.Log(rightEyeDist);
         _latestFaceY = faceY;
         _latestEyeClosed = (leftEyeDist < blinkThreshold || rightEyeDist < blinkThreshold);
         _hasNewData = true;

@@ -1,34 +1,79 @@
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class ScaleFromAudio : MonoBehaviour
 {
-    
-    public Vector3 minScale;
-    public Vector3 maxScale;
     public AudioDetection detector;
-    public float loudnessSens = 100;
+
+    public float loudnessSens = 80f;
     public float threshold = 0.1f;
-    public float smoothSpeed = 30f;
+
+    public float jumpMultiplier = 3f;
+    public float maxJumpHeight = 6f;
+
+    public float jumpLerpSpeed = 15f; 
+    public float gravity = 40f; 
+
+    private float baseY;
+    private float currentY;
+    private float targetY;
+
+    private bool isJumping = false;
+    private bool isFalling = false;
+    private float verticalVelocity = 0f;
+
     void Start()
     {
-       
+        baseY = transform.position.y;
+        currentY = baseY;
     }
 
-    
     void Update()
     {
-        float loudness = detector.GetLoudnessFromMicrpohone()*loudnessSens;
-     
-        if(loudness < threshold)
+        if (!isJumping)
         {
-            loudness = 0;
-        }
-        Vector3 targetScale = Vector3.Lerp(minScale, maxScale, loudness);
-        transform.localScale = Vector3.MoveTowards(transform.localScale, targetScale, smoothSpeed * Time.deltaTime);
-        Debug.Log(smoothSpeed * Time.deltaTime);
-        
-    }
+            float loudness = detector.GetLoudnessFromMicrpohone() * loudnessSens;
 
-    
+            if (loudness > threshold)
+            {
+                isJumping = true;
+                isFalling = false;
+
+                targetY = baseY + (loudness * jumpMultiplier);
+                if (targetY > baseY + maxJumpHeight)
+                {
+                    targetY = baseY + maxJumpHeight;
+                }
+            }
+            else
+            {
+                currentY = baseY;
+            }
+        }
+        else
+        {
+            if (!isFalling)
+            {
+                currentY = Mathf.Lerp(currentY, targetY, Time.deltaTime * jumpLerpSpeed);
+
+                if (Mathf.Abs(currentY - targetY) < 0.1f)
+                {
+                    isFalling = true;
+                    verticalVelocity = 0f;
+                }
+            }
+            else
+            {
+                verticalVelocity -= gravity * Time.deltaTime;
+                currentY += verticalVelocity * Time.deltaTime;
+
+                if (currentY <= baseY)
+                {
+                    currentY = baseY;
+                    isJumping = false; 
+                }
+            }
+        }
+
+        transform.position = new Vector3(transform.position.x, currentY, transform.position.z);
+    }
 }

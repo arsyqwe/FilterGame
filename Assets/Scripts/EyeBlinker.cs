@@ -1,52 +1,50 @@
-using System.Collections.Generic;
-using Mediapipe.Tasks.Components.Containers;
 using UnityEngine;
 
 public class EyeBlinker : MonoBehaviour
 {
-    
-    public static EyeBlinker Instance;
+    private string _blinkText = "";
+    private float _textClearTime = 0f;
 
-   
-    [Range(0f, 0.05f)]
-    public float blinkThreshold = 0.03f;
-
-    public bool IsEyeClosed { get; private set; }
-
-    private void Awake()
+    public void Update()
     {
-        Instance = this;
+        if (!Wrapper.Instance.IsCalibrated) return;
+
+        if (Wrapper.Instance.ConsumeLeftBlink())
+        {
+            MoveCharacterLeft();
+        }
+        else if (Wrapper.Instance.ConsumeRightBlink())
+        {
+            MoveCharacterRight();
+        }
     }
 
-   
-    public void CheckBlink(NormalizedLandmarks landmarks)
+    public void MoveCharacterLeft()
     {
+        _blinkText = "Sola ";
+        _textClearTime = Time.time + 1.5f;
+    }
 
-      
-        if ( landmarks.landmarks == null || landmarks.landmarks.Count == 0) return;
+    public void MoveCharacterRight()
+    {
+        _blinkText = "Sağa ";
+        _textClearTime = Time.time + 1.5f;
+    }
 
-        var list = landmarks.landmarks;
+    public void OnGUI()
+    {
+        GUIStyle style = new GUIStyle(GUI.skin.label) { fontSize = 36, alignment = TextAnchor.UpperRight };
+        GUI.color = Color.green;
 
-        
-        Vector3 leftUpper = new Vector3(list[159].x, list[159].y, list[159].z);
-        Vector3 leftLower = new Vector3(list[145].x, list[145].y, list[145].z);
+        Rect rect = new Rect(Screen.width - 350, 20, 330, 50);
 
-      
-        Vector3 rightUpper = new Vector3(list[386].x, list[386].y, list[386].z);
-        Vector3 rightLower = new Vector3(list[374].x, list[374].y, list[374].z);
-
-       
-        float leftEyeDist = Vector3.Distance(leftUpper, leftLower);
-        float rightEyeDist = Vector3.Distance(rightUpper, rightLower);
-        Debug.Log($"Left: {leftEyeDist} Right: {rightEyeDist}");
-
-        if (leftEyeDist < blinkThreshold || rightEyeDist < blinkThreshold)
+        if (!Wrapper.Instance.IsCalibrated)
         {
-            IsEyeClosed = true;
+            GUI.Label(rect, Wrapper.Instance.CalibrationText, style);
         }
-        else
+        else if (Time.time < _textClearTime)
         {
-            IsEyeClosed = false;
+            GUI.Label(rect, _blinkText, style);
         }
     }
 }
